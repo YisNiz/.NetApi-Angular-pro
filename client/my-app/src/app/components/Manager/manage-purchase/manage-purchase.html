@@ -1,0 +1,171 @@
+<div class="flex flex-column gap-4 mb-5">
+    <div class="flex justify-content-between align-items-end flex-wrap gap-3">
+
+        <div>
+            <h1 class="m-0 text-primary-900" style="font-size:2.5rem; font-weight:800;">Purchases Portal</h1>
+            <p class="text-gray-500 m-0">Monitor gifts performance and draw winners</p>
+        </div>
+
+        <!-- ALL BUTTONS (sorting + reports) -->
+        <div class="flex gap-2 flex-wrap justify-content-end align-items-center">
+
+            <!-- Sorting -->
+            <button pButton label="Most Purchased" icon="pi pi-chart-line"
+                class="p-button-outlined p-button-warning border-round-xl"
+                (click)="sortPurchases('purchases')"></button>
+
+            <button pButton label="Most Expensive" icon="pi pi-dollar"
+                class="p-button-outlined p-button-warning border-round-xl" (click)="sortPurchases('price')"></button>
+
+            <button pButton label="Reset" icon="pi pi-refresh" class="p-button-outlined border-round-xl"
+                (click)="resetSorting()"></button>
+
+            <!-- Reports (different style) -->
+            <button pButton label="Gifts & Winners Report" icon="pi pi-file" class="border-round-2xl shadow-3"
+                style="background: linear-gradient(90deg,#e0f7fa,#e8f5e9); color:#064e3b; border:0;"
+                (click)="onGiftsWinnersReport()"></button>
+
+            <button pButton label="Total Sales Summary" icon="pi pi-chart-bar" class="border-round-2xl shadow-3"
+                style="background: linear-gradient(90deg,#ede9fe,#e0f2fe); color:#1e3a8a; border:0;"
+                (click)="onTotalSalesReport()"></button>
+
+        </div>
+
+    </div>
+</div>
+
+<p-toast position="top-center"></p-toast>
+
+
+<p-toast position="top-center"></p-toast>
+
+
+<div class="border-none shadow-0">
+    @if (loading) {
+    <div class="flex justify-content-center align-items-center mt-6 gap-3">
+        <p-progressSpinner></p-progressSpinner>
+        <span class="text-lg font-medium text-gray-600">
+            Loading purchases...
+        </span>
+    </div>
+    }
+
+    <p-table [value]="(purchases$ | async)!" [rowHover]="true" styleClass="p-datatable-flush"> <ng-template
+            pTemplate="header">
+            <tr style="border-bottom: 2px solid var(--primary-100)">
+                <th class="bg-white text-gray-800 font-medium py-3">GIFT DETAILS</th>
+                <th class="bg-white text-gray-800 font-medium py-3 text-center">SALES</th>
+                <th class="bg-white text-gray-800 font-medium py-3">WINNER INFO</th>
+                <th class="bg-white text-gray-800 font-medium py-3 text-right">MANAGEMENT</th>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-p>
+            <tr class="hover:bg-primary-50 transition-all transition-duration-200">
+                <td class="py-4">
+                    <div class="flex align-items-center gap-3">
+                        <div class="flex align-items-center justify-content-center bg-primary-100 border-round-lg"
+                            style="width:45px; height:45px">
+                            <i class="pi pi-gift text-primary-700"></i>
+                        </div>
+                        <div class="flex flex-column">
+                            <span class="font-bold text-gray-900 text-lg">{{ p.giftName }}</span>
+                            <span class="text-primary-600 font-medium">{{ p.ticketCost | currency }}</span>
+                        </div>
+                    </div>
+                </td>
+
+                <td class="text-center">
+                    <div class="flex flex-column align-items-center">
+                        <span class="text-2xl font-black text-gray-800">{{ p.quantity }}</span>
+                        <small class="text-gray-500 uppercase text-xs font-bold">Sold</small>
+                    </div>
+                </td>
+
+                <td>
+                    @if (p.winnerName && p.winnerName !== 'No winner yet') {
+                    <div class="flex align-items-center gap-2">
+                        <i class="pi pi-trophy text-yellow-500 text-xl"></i>
+                        <span class="font-bold text-gray-800">{{ p.winnerName }}</span>
+                    </div>
+                    } @else {
+                    <span class="text-gray-400 italic">No winner yet</span>
+                    }
+                </td>
+
+                <td class="text-right">
+                    <div class="flex gap-2 justify-content-end">
+                        <button pButton label="View Purchasers" icon="pi pi-users"
+                            class="p-button-text p-button-secondary text-sm"
+                            (click)="onShowPurchaseDetails(p.id)"></button>
+
+                        <button pButton label="Draw Winner" icon="pi pi-bolt"
+                            class="p-button-warning border-round-lg shadow-2"
+                            [disabled]="p.winnerName && p.winnerName !== 'No winner yet'"
+                            (click)="onDrawWinner(p.id)"></button>
+                    </div>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+    <!-- Purchasers Details Popup -->
+    <p-dialog header="Purchasers Details" [(visible)]="show" [modal]="true" [dismissableMask]="true" [draggable]="false"
+        [resizable]="false" [style]="{ width: '34rem' }" styleClass="border-round-xl">
+
+        <ng-template pTemplate="content">
+
+            <!-- loading / empty / table -->
+            <ng-container *ngIf="details$ | async as details; else loadingTpl">
+
+                <ng-container *ngIf="details.length > 0; else emptyTpl">
+                    <p-table [value]="details" [rowHover]="true" [paginator]="true" [rows]="5"
+                        styleClass="p-datatable-sm p-datatable-striped">
+
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th>Username</th>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Purchase Date</th>
+                            </tr>
+                        </ng-template>
+
+                        <ng-template pTemplate="body" let-d>
+                            <tr>
+                                <td class="font-medium">{{ d.user?.userName ?? '-' }}</td>
+                                <td>{{ d.user?.name ?? '-' }}</td>
+                                <td>{{ d.user?.phone ?? '-' }}</td>
+                                <td>{{ d.purchaseDate ? (d.purchaseDate | date:'dd/MM/yyyy HH:mm') : '-' }}</td>
+                            </tr>
+                        </ng-template>
+
+                    </p-table>
+                </ng-container>
+
+            </ng-container>
+
+            <!-- loading -->
+            <ng-template #loadingTpl>
+                <div class="flex justify-content-center align-items-center" style="min-height: 10rem;">
+                    <p-progressSpinner></p-progressSpinner>
+                </div>
+            </ng-template>
+
+            <!-- empty -->
+            <ng-template #emptyTpl>
+                <div class="flex flex-column align-items-center justify-content-center gap-2 text-gray-500"
+                    style="min-height: 10rem;">
+                    <i class="pi pi-info-circle text-xl"></i>
+                    <span>No purchasers details yet...</span>
+                </div>
+            </ng-template>
+
+        </ng-template>
+
+        <ng-template pTemplate="footer">
+            <button pButton label="Close" icon="pi pi-times" class="p-button-text" (click)="show=false"></button>
+        </ng-template>
+
+    </p-dialog>
+
+</div>

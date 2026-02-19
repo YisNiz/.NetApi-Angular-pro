@@ -1,0 +1,51 @@
+html, body
+  height: 100%
+  margin: 0
+  padding: 0
+
+.page-wrapper
+  min-height: 62vh
+  display: flex
+  flex-direction: column
+
+.content
+  flex: 1
+  padding: 2rem 1rem
+  display: flex
+  flex-direction: column
+  justify-content: flex-start  // מבטיח שהתוכן יתחיל למעלה ולא למלא את כל הגובה
+
+
+.mini-footer
+  flex-shrink: 0
+  background-color: #fbbf24 // צהוב חמים
+  color: #1f2937 // כהה לניגודיות
+  text-align: center
+  padding: 1rem 0
+  font-size: 0.875rem
+
+  .footer-container
+    max-width: 1200px
+    margin: 0 auto
+    padding: 0 1rem
+
+  .footer-content
+    display: flex
+    flex-direction: column
+    gap: 0.25rem
+    align-items: center
+
+    .credits
+      font-style: italic
+      color: #1f2937
+      margin-top: 0.25rem
+
+a
+  color: #1f2937
+  text-decoration: none
+  &:hover
+    text-decoration: underline
+
+@media (max-width: 600px)
+  .mini-footer .footer-content
+    font-size: 0.8rem

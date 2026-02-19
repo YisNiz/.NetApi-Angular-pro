@@ -1,0 +1,51 @@
+2026-02-18 00:24:26.028 +02:00 [INF] Starting Store API application {}
+2026-02-18 00:24:26.446 +02:00 [INF] Store API is now running {}
+2026-02-18 09:26:28.709 +02:00 [INF] Starting Store API application {}
+2026-02-18 09:26:29.522 +02:00 [INF] Store API is now running {}
+2026-02-18 09:41:31.589 +02:00 [INF] Starting Store API application {}
+2026-02-18 09:41:33.057 +02:00 [INF] Store API is now running {}
+2026-02-18 09:57:00.419 +02:00 [INF] Starting Store API application {}
+2026-02-18 09:57:00.713 +02:00 [INF] Store API is now running {}
+2026-02-18 11:21:12.431 +02:00 [INF] Starting Store API application {}
+2026-02-18 11:21:13.498 +02:00 [INF] Store API is now running {}
+2026-02-18 11:29:30.283 +02:00 [INF] Starting Store API application {}
+2026-02-18 11:29:30.459 +02:00 [INF] Store API is now running {}
+2026-02-18 11:30:49.421 +02:00 [INF] Starting Store API application {}
+2026-02-18 11:30:49.600 +02:00 [INF] Store API is now running {}
+2026-02-18 11:37:33.782 +02:00 [INF] Starting Store API application {}
+2026-02-18 11:37:33.923 +02:00 [FTL] Application start-up failed {}
+Microsoft.Extensions.Hosting.HostAbortedException: The host was aborted.
+   at Microsoft.Extensions.Hosting.HostFactoryResolver.HostingListener.ThrowHostAborted()
+   at Microsoft.Extensions.Hosting.HostFactoryResolver.HostingListener.OnNext(KeyValuePair`2 value)
+   at System.Diagnostics.DiagnosticListener.Write(String name, Object value)
+   at System.Diagnostics.DiagnosticSource.Write[T](String name, T value)
+   at Microsoft.Extensions.Hosting.HostBuilder.ResolveHost(IServiceProvider serviceProvider, DiagnosticListener diagnosticListener)
+   at Microsoft.Extensions.Hosting.HostApplicationBuilder.Build()
+   at Microsoft.AspNetCore.Builder.WebApplicationBuilder.Build()
+   at Program.<Main>$(String[] args) in E:\ProjectAngularApi\server\ChineseSaleApi\Program.cs:line 167
+2026-02-18 11:38:22.776 +02:00 [INF] Starting Store API application {}
+2026-02-18 11:38:22.923 +02:00 [FTL] Application start-up failed {}
+Microsoft.Extensions.Hosting.HostAbortedException: The host was aborted.
+   at Microsoft.Extensions.Hosting.HostFactoryResolver.HostingListener.ThrowHostAborted()
+   at Microsoft.Extensions.Hosting.HostFactoryResolver.HostingListener.OnNext(KeyValuePair`2 value)
+   at System.Diagnostics.DiagnosticListener.Write(String name, Object value)
+   at System.Diagnostics.DiagnosticSource.Write[T](String name, T value)
+   at Microsoft.Extensions.Hosting.HostBuilder.ResolveHost(IServiceProvider serviceProvider, DiagnosticListener diagnosticListener)
+   at Microsoft.Extensions.Hosting.HostApplicationBuilder.Build()
+   at Microsoft.AspNetCore.Builder.WebApplicationBuilder.Build()
+   at Program.<Main>$(String[] args) in E:\ProjectAngularApi\server\ChineseSaleApi\Program.cs:line 167
+2026-02-18 11:38:57.251 +02:00 [INF] Starting Store API application {}
+2026-02-18 11:38:57.432 +02:00 [FTL] Application start-up failed {}
+Microsoft.Extensions.Hosting.HostAbortedException: The host was aborted.
+   at Microsoft.Extensions.Hosting.HostFactoryResolver.HostingListener.ThrowHostAborted()
+   at Microsoft.Extensions.Hosting.HostFactoryResolver.HostingListener.OnNext(KeyValuePair`2 value)
+   at System.Diagnostics.DiagnosticListener.Write(String name, Object value)
+   at System.Diagnostics.DiagnosticSource.Write[T](String name, T value)
+   at Microsoft.Extensions.Hosting.HostBuilder.ResolveHost(IServiceProvider serviceProvider, DiagnosticListener diagnosticListener)
+   at Microsoft.Extensions.Hosting.HostApplicationBuilder.Build()
+   at Microsoft.AspNetCore.Builder.WebApplicationBuilder.Build()
+   at Program.<Main>$(String[] args) in E:\ProjectAngularApi\server\ChineseSaleApi\Program.cs:line 167
+2026-02-18 11:40:45.186 +02:00 [INF] Starting Store API application {}
+2026-02-18 11:40:46.201 +02:00 [INF] Store API is now running {}
+2026-02-18 11:41:39.087 +02:00 [INF] Starting Store API application {}
+2026-02-18 11:41:39.275 +02:00 [INF] Store API is now running {}

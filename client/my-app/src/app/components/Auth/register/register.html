@@ -1,0 +1,70 @@
+<div class="register-container" style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f5f5f5;">
+    <p-card 
+        [style]="{ width: '600px', margin: 'auto', 'border-radius': '12px', 'background-color': 'white', padding: '2rem' }"
+    >
+        <!-- Welcome Header -->
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <h1 style="color: #f1c40f; font-size: 2.5rem; font-weight: 800; margin: 0;">Register at Lucky Deal!</h1>
+            <p style="color: #2c3e50; font-size: 1.2rem; margin-top: 0.5rem;">
+                Fill in the details to create your account
+            </p>
+        </div>
+
+        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+            <p-toast position="top-center"></p-toast>
+
+            <!-- Name Field -->
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="name">Name</label>
+                <input id="name" type="text" pInputText formControlName="name" class="form-control"
+                    [style]="{ width: '100%', padding: '0.5rem', 'border-radius': '6px', border: '1px solid #ddd' }" />
+                <p-message *ngIf="registerForm.get('name')?.touched && registerForm.get('name')?.hasError('required')"
+                    severity="error" text="Name is required"></p-message>
+            </div>
+
+            <!-- Email Field -->
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="email">Email</label>
+                <input id="email" type="email" pInputText formControlName="email" class="form-control"
+                    [style]="{ width: '100%', padding: '0.5rem', 'border-radius': '6px', border: '1px solid #ddd' }" />
+                <p-message *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.hasError('required')"
+                    severity="error" text="Email is required"></p-message>
+                <p-message *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.hasError('email')"
+                    severity="error" text="Email is not valid"></p-message>
+            </div>
+
+            <!-- Password Field -->
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="Password">Password</label>
+                <p-password id="Password" formControlName="passwordHash" [toggleMask]="true" class="form-control"
+                    [style]="{ width: '100%', 'padding-right': '40px', 'background-color': '#f0f0f0', 'border-radius': '6px', padding: '0.5rem' }">
+                </p-password>
+                <p-message *ngIf="registerForm.get('passwordHash')?.touched && registerForm.get('passwordHash')?.hasError('required')"
+                    severity="error" text="Password is required"></p-message>
+                <p-message *ngIf="registerForm.get('passwordHash')?.touched && (registerForm.get('passwordHash')?.hasError('minlength') || registerForm.get('passwordHash')?.hasError('maxlength'))"
+                    severity="error" text="Password must be 6–15 characters"></p-message>
+            </div>
+
+            <!-- Phone Field -->
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="Phone">Phone</label>
+                <p-inputmask
+                    id="phone" mask="059-9999999" formControlName="phone" class="form-control"
+                    [style]="{ width: '100%', padding: '0.5rem', 'border-radius': '6px', border: '1px solid #ddd' }">
+                </p-inputmask>
+                <p-message *ngIf="registerForm.get('phone')?.touched && registerForm.get('phone')?.hasError('pattern')"
+                    severity="error" text="Phone must be a valid Israeli number (05X-XXXXXXX)"></p-message>
+                <a routerLink="/login" style="color: #d4ac0d; margin-top: 10px; display: inline-block; font-size: 17px;">
+                    Already registered? Go to login
+                </a>
+            </div>
+
+            <!-- Submit Button -->
+            <p-footer type="footer">
+                <button pButton type="submit" label="Register" [disabled]="registerForm.invalid || isSubmitting"
+                    [style]="{ width: '100%', padding: '0.75rem', 'font-size': '1.1rem' }">
+                </button>
+            </p-footer>
+        </form>
+    </p-card>
+</div>

@@ -1,0 +1,55 @@
+<div class="login-container" style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f5f5f5;">
+    <p-card 
+        [style]="{ width: '600px', margin: 'auto', 'border-radius': '12px', 'background-color': 'white', padding: '2rem' }"
+    >
+        <!-- Welcome Header -->
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <h1 style="color: #f1c40f; font-size: 2.5rem; font-weight: 800; margin: 0;">Welcome to Lucky Deal!</h1>
+            <p style="color: #2c3e50; font-size: 1.2rem; margin-top: 0.5rem;">
+                Please log in to continue
+            </p>
+        </div>
+
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+            <p-toast position="top-center"></p-toast>
+            
+            <!-- Email Field -->
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="email">Email</label>
+                <input id="email" type="email" pInputText formControlName="email" class="form-control"
+                    [style]="{ width: '100%', padding: '0.5rem', 'border-radius': '6px', border: '1px solid #ddd' }" />
+                
+                <p-message *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.hasError('required')"
+                    severity="error" text="Email is required"></p-message>
+
+                <p-message *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.hasError('email')"
+                    severity="error" text="Email is not valid"></p-message>
+            </div>
+
+            <!-- Password Field -->
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="Password">Password</label>
+                <p-password id="Password" formControlName="passwordHash" [toggleMask]="true" class="form-control"
+                    [style]="{ width: '100%', 'padding-right': '40px', 'background-color': '#f0f0f0', 'border-radius': '6px', padding: '0.5rem' }">
+                </p-password>
+
+                <p-message *ngIf="loginForm.get('passwordHash')?.touched && loginForm.get('passwordHash')?.hasError('required')"
+                    severity="error" text="Password is required"></p-message>
+
+                <p-message *ngIf="loginForm.get('passwordHash')?.touched && (loginForm.get('passwordHash')?.hasError('minlength') || loginForm.get('passwordHash')?.hasError('maxlength'))"
+                    severity="error" text="Password must be 6–15 characters"></p-message>
+                
+                <a routerLink="/register" style="color: #d4ac0d; margin-top: 10px; display: inline-block; font-size: 17px;">
+                    Need to register first? Go to register
+                </a>      
+            </div>
+
+            <!-- Submit Button -->
+            <p-footer type="footer">
+                <button pButton type="submit" label="Login" [disabled]="loginForm.invalid || isSubmitting"
+                    [style]="{ width: '100%', padding: '0.75rem', 'font-size': '1.1rem' }">
+                </button>
+            </p-footer>
+        </form>
+    </p-card>
+</div>

@@ -1,0 +1,144 @@
+<!-- Header -->
+<div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-3 mb-3">
+  <div>
+    <h1 class="m-0 text-primary-900" style="font-size:2rem; font-weight:800; letter-spacing:-0.5px;">
+      Our Gifts
+    </h1>
+    <small class="text-gray-600" style="font-size:1.5rem;">
+      Browse and add gifts to your cart
+    </small>
+  </div>
+
+  <div class="flex gap-2 align-items-center flex-wrap">
+    <p-toast position="top-center"></p-toast>
+
+    <!-- Sort Buttons -->
+    <div class="flex gap-2 align-items-center">
+      <button pButton type="button" icon="pi pi-sort-amount-up-alt" label="Sort by Category"
+              class="p-button-outlined border-round-lg"
+              (click)="onSortByPriceOrCategory('category')">
+      </button>
+
+      <button pButton type="button" icon="pi pi-sort-amount-up-alt" label="Sort by Price"
+              class="p-button-outlined border-round-lg"
+              (click)="onSortByPriceOrCategory('price')">
+      </button>
+    </div>
+
+    <p-button icon="pi pi-times" label="Clear Filters" size="small"
+              styleClass="p-button-secondary border-round-lg"
+              (onClick)="onClearFilters()">
+    </p-button>
+  </div>
+</div>
+
+<!-- Content box -->
+<div class="p-3 border-round-xl shadow-1 bg-white">
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="flex flex-column justify-content-center align-items-center border-round-xl shadow-2"
+       style="min-height: 400px; background: linear-gradient(135deg, #fff7ed 0%, #ffffff 100%);">
+    <p-progressSpinner strokeWidth="4" styleClass="w-4rem h-4rem"></p-progressSpinner>
+    <span class="mt-4 text-primary-700 font-semibold" style="font-size: 1.1rem; letter-spacing: 0.5px;">
+      Loading gifts...
+    </span>
+    <small class="text-gray-500 mt-2">Please wait a moment</small>
+  </div>
+
+  <!-- Gifts List -->
+  <div *ngIf="!loading">
+    <!-- No Gifts -->
+    <p-message *ngIf="giftList.length === 0" severity="info" text="No products found..."></p-message>
+
+    <!-- Gifts Grid -->
+    <div class="grid" *ngIf="giftList.length > 0">
+      <div class="col-12 sm:col-6 lg:col-4 xl:col-3"
+           *ngFor="let gift of giftList; trackBy:giftTrackBy">
+        <p-card styleClass="h-full border-round-xl overflow-hidden">
+
+          <!-- Image -->
+          <img *ngIf="gift.pictureUrl" [src]="'http://localhost:5062/' + gift.pictureUrl"
+               [alt]="gift.name" class="w-full" style="height:170px; object-fit:cover" />
+          <div *ngIf="!gift.pictureUrl"
+               class="w-full flex align-items-center justify-content-center bg-primary-50"
+               style="height:170px">
+            <i class="pi pi-image text-primary-400" style="font-size:2rem"></i>
+          </div>
+
+          <!-- Body -->
+          <div class="pt-2">
+            <div class="flex justify-content-between align-items-start gap-2">
+              <h3 class="m-0 text-primary-900 text-lg line-height-2">{{ gift.name }}</h3>
+              <p-tag *ngIf="gift.categoryName" [value]="gift.categoryName" severity="warn"></p-tag>
+            </div>
+
+            <p class="mt-2 mb-2 text-sm text-gray-600" style="min-height:38px">
+              {{ gift.description || 'No description' }}
+            </p>
+
+            <!-- Donor -->
+            <span *ngIf="gift.donorName" class="text-yellow-600 font-semibold text-sm">
+              Donated by: {{ gift.donorName }}
+            </span>
+              <br>
+            <!-- Winner -->
+            <span *ngIf="gift.winnerUser" class="text-yellow-900 font-semibold text-m">
+              Winner:🏆 {{ gift.winnerUser }}
+            </span>
+            <span *ngIf="!gift.winnerUser" class="text-orange-700 font-semibold text-sm">
+              No winner yet
+            </span>
+
+            <div class="flex justify-content-between align-items-center mt-2 mb-3">
+              <span class="font-bold text-primary-700" style="font-size: 1.1rem;">
+                ₪{{ gift.ticketCost }}
+              </span>
+            </div>
+
+            <!-- Add to Cart -->
+            <button pButton type="button" icon="pi pi-shopping-cart" label="Add to Cart"
+                    class="p-button w-full border-round-lg"
+                    style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); border: none;"
+                    [disabled]="gift.winnerUser"
+                    (click)="onAddToCart(gift.id)">
+            </button>
+
+            <p *ngIf="gift.winnerUser" class="text-s text-center text-gray-500 mt-2 m-0">
+              This gift has been won
+            </p>
+          </div>
+        </p-card>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Cart Button -->
+  <div class="fixed bottom-0 left-0 m-4 z-5">
+   <div class="fixed bottom-0 left-0 m-4 z-50" style="position: relative; width: 70px; height: 70px;">
+  <button pButton type="button"
+          class="p-button-rounded shadow-6 relative w-full h-full transition-all transition-duration-300 hover:shadow-8"
+          style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+                 border: 3px solid white; font-size: 1.8rem;"
+          (click)="onOpenCart()">
+    <i class="pi pi-shopping-cart"></i>
+  </button>
+
+  <span *ngIf="cartItemsCount > 0"
+        class="absolute bg-red-600 text-white border-circle flex align-items-center justify-content-center border-2 border-white animate-bounce"
+        style="top: -10px; right: -10px; width: 28px; height: 28px; font-size: 0.85rem; font-weight: bold; z-index: 50;">
+    {{ cartItemsCount }}
+  </span>
+</div>
+
+
+    <app-cart *ngIf="cartVisible"
+          [cartItems]="cartItems"
+          [showCart]="cartVisible"
+          (cartUpdated)="cartItems = $event"
+          (close)="onCloseCart()">
+   </app-cart>
+
+
+  </div>
+
+</div>

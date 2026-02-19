@@ -1,0 +1,119 @@
+<!-- TOP MENU -->
+<div
+  class="flex justify-content-between align-items-center px-4 py-3 flex-wrap gap-3"
+  style="
+    background:#fff;
+    border-bottom: 2px solid var(--primary-100);
+    box-shadow: 0 6px 18px rgba(0,0,0,.06);
+  "
+>
+
+  <!-- Left -->
+  <div class="flex align-items-center gap-4">
+
+    <!-- Icon -->
+    <div class="flex align-items-center justify-content-center bg-primary-100 border-round-lg"
+         style="width:42px; height:42px;">
+      <i class="pi pi-briefcase text-primary-700 text-xl"></i>
+    </div>
+
+    <!-- Title -->
+    <span class="font-bold text-primary-900" style="font-size:1.2rem;">
+      User Menu
+    </span>
+
+    <!-- Products Button -->
+    <a
+      *ngFor="let item of menuItems"
+      [routerLink]="item.link"
+      routerLinkActive="menu-active"
+      class="menu-item"
+    >
+      <i [class]="item.icon"></i>
+      {{ item.label }}
+    </a>
+
+  </div>
+
+  <!-- Right: Auth -->
+  <div class="flex align-items-center gap-2 flex-wrap justify-content-end">
+
+    <button
+      pButton
+      label="Login"
+      icon="pi pi-sign-in"
+      class="p-button-outlined border-round-2xl"
+      (click)="goLogin()">
+    </button>
+
+    <button
+      pButton
+      label="Register"
+      icon="pi pi-user-plus"
+      class="p-button-warning border-round-2xl shadow-2"
+      (click)="goRegister()">
+    </button>
+
+    <button
+      pButton
+      label="Logout"
+      icon="pi pi-sign-out"
+      class="p-button-outlined border-round-2xl"
+      (click)="logout()">
+    </button>
+
+  </div>
+
+</div>
+
+
+
+<style>
+  .menu-item{
+    text-decoration:none;
+    display:flex;
+    align-items:center;
+    gap:.5rem;
+    padding:.6rem 1rem;
+    border-radius:999px;
+    font-weight:700;
+    color:#374151;
+    border:2px solid rgba(0,0,0,.06);
+    background:#fff;
+    transition:.2s;
+  }
+  .menu-item:hover{ background: rgba(255, 235, 59, .18); }
+  .menu-active{
+    background: var(--primary-100) !important;
+    color: var(--primary-900) !important;
+    border-color: rgba(255, 235, 59, .45) !important;
+  }
+  .custom-cart-button {
+  background-color: #fff; /* רקע לבן */
+  color:   #000; /* טקסט שחור */
+  border: 2px solid rgba(255, 235, 59, .45); /* מסגרת שחורה */
+  border-radius: 999px; /* שומר על העיגול */
+  font-weight: 1000; /* שמור על הפונט העבה */
+  font-family: inherit; /* ישמור על הפונט הקיים של הדף */
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* רווח בין האייקון לטקסט */
+}
+
+.custom-cart-button .pi {
+  color: #000; /* אייקון העגלה שחור */
+}
+
+</style>
+
+<!-- PAGE CONTENT -->
+<div class="p-4">
+
+    <!-- <app-cart *ngIf="cartVisible"
+          [showCart]="cartVisible"
+          (close)="cartVisible=false">
+   </app-cart> -->
+
+
+  <router-outlet></router-outlet>
+</div>
