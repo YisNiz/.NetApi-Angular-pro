@@ -10,7 +10,10 @@ using Microsoft.OpenApi.Models;
 using Serilog;
 using System.Security.Claims;
 using System.Text;
-
+using StackExchange.Redis;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
+using Swashbuckle.AspNetCore.SwaggerGen;
 // Configure Serilog
 
 Log.Logger = new LoggerConfiguration()
@@ -31,39 +34,71 @@ try
 
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
-    builder.Services.AddSwaggerGen(c =>
-    {
-        c.SwaggerDoc("v1", new OpenApiInfo
-        {
-            Title = "ChineseSaleApi",
-            Version = "v1"
-        });
 
-        c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+
+    builder.Services.AddSwaggerGen(options =>
+    {
+        options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
         {
             Name = "Authorization",
-            Type = SecuritySchemeType.Http,
-            Scheme = "bearer",
+            Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+            Scheme = "Bearer",
             BearerFormat = "JWT",
-            In = ParameterLocation.Header,
-            Description = " Bearer {token}"
+            In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+            Description = "נא להזין את הטוקן בלבד (ללא המילה Bearer)"
+
         });
 
-        c.AddSecurityRequirement(new OpenApiSecurityRequirement
+        options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
         {
             {
-                new OpenApiSecurityScheme
+                new Microsoft.OpenApi.Models.OpenApiSecurityScheme
                 {
-                    Reference = new OpenApiReference
+                    Reference = new Microsoft.OpenApi.Models.OpenApiReference
                     {
-                        Type = ReferenceType.SecurityScheme,
+                        Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
                         Id = "Bearer"
                     }
                 },
-                Array.Empty<string>()
+                new string[] {}
             }
         });
+        options.OperationFilter<SwaggerCookieIdempotency>();
     });
+    //הקודם. עובד פצצה
+    // builder.Services.AddSwaggerGen(c =>
+    // {
+    //     c.SwaggerDoc("v1", new OpenApiInfo
+    //     {
+    //         Title = "ChineseSaleApi",
+    //         Version = "v1"
+    //     });
+
+    //     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    //     {
+    //         Name = "Authorization",
+    //         Type = SecuritySchemeType.Http,
+    //         Scheme = "bearer",
+    //         BearerFormat = "JWT",
+    //         In = ParameterLocation.Header,
+    //         Description = " Bearer {token}"
+    //     });
+
+    //     c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    //     {
+    //         {
+    //             new OpenApiSecurityScheme
+    //             {
+    //                 Reference = new OpenApiReference
+    //                 {
+    //                     Type = ReferenceType.SecurityScheme,
+    //                     Id = "Bearer"
+    //                 }
+    //             },
+    //             Array.Empty<string>()
+    //         }
+    //     });
+    // });
 
     builder.Services.AddDbContext<ChineseSaleContextDb>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("AnotherConnection")));
@@ -79,6 +114,9 @@ try
     builder.Services.AddScoped<IUserRepository, UserRepository>();
     builder.Services.AddScoped<IUserService, UserService>();
     builder.Services.AddScoped<ITokenService, TokenService>();
+    builder.Services.AddSingleton<IConnectionMultiplexer>(sp => 
+    ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("Redis")));
+
 
     // Configure JWT Authentication
     var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -106,8 +144,55 @@ try
             RoleClaimType = ClaimTypes.Role
         };
 
+        //    options.Events = new JwtBearerEvents
+        //    {
+        //        OnChallenge = context =>
+        //        {
+        //            context.HandleResponse();
+        //            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+
+        //            return context.Response.WriteAsJsonAsync(new
+        //            {
+        //                message = "you dont have token or your token is expired" +
+        //                "please login again"
+        //            });
+        //        },
+
+        //        OnForbidden = context =>
+        //        {
+        //            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+
+        //            return context.Response.WriteAsJsonAsync(new
+        //            {
+        //                message = "forbbiden! you dont have an accses to do this action"
+        //            });
+        //        },
+
+        //        OnAuthenticationFailed = context =>
+        //        {
+        //            return Task.CompletedTask;
+        //        },
+
+        //        OnTokenValidated = context =>
+        //        {
+        //            var userId = context.Principal?
+        //                .FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        //            return Task.CompletedTask;
+        //        }
+        //    };
         options.Events = new JwtBearerEvents
         {
+            OnMessageReceived = context =>
+            {
+                var token = context.Request.Cookies["jwt_token"];
+                if (!string.IsNullOrEmpty(token))
+                {
+                    context.Token = token;
+                }
+                return Task.CompletedTask;
+            },
+
             OnChallenge = context =>
             {
                 context.HandleResponse();
@@ -116,7 +201,7 @@ try
                 return context.Response.WriteAsJsonAsync(new
                 {
                     message = "you dont have token or your token is expired" +
-                    "please login again"
+                    " please login again"
                 });
             },
 
@@ -159,11 +244,30 @@ try
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("CorsPolicy", policy =>
-            policy.WithOrigins(allowedOrigins)
+        {
+            policy.WithOrigins("http://localhost:5062") // ודאי שזה http
                   .AllowAnyHeader()
                   .AllowAnyMethod()
-        );
+                  .AllowCredentials(); // חובה לעוגיות
+        });
     });
+
+
+    builder.Services.AddRateLimiter(options =>
+{
+    // הגדרת מדיניות מסוג Sliding Window
+    options.AddSlidingWindowLimiter(policyName: "sliding", slidingOptions =>
+    {
+        slidingOptions.PermitLimit = 10; // מקסימום 10 בקשות
+        slidingOptions.Window = TimeSpan.FromMinutes(1); // בתוך חלון של דקה
+        slidingOptions.SegmentsPerWindow = 3; // חלוקת הדקה ל-3 מקטעים (20 שניות כל אחד)
+        slidingOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        slidingOptions.QueueLimit = 2; // מקסימום 2 בקשות שיחכו בתור אם חרגנו
+    });
+
+    // מה קורה כשמישהו חורג? נחזיר שגיאה 429 (Too Many Requests)
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
     var app = builder.Build();
     if (app.Environment.IsDevelopment())
     {
@@ -187,9 +291,10 @@ try
         app.UseSwaggerUI();
     }
 
-    app.UseHttpsRedirection();
+    //app.UseHttpsRedirection();
     app.UseStaticFiles();
     app.UseAuthentication();
+    app.UseRateLimiter();
     app.UseAuthorization();
 
     app.MapControllers();
@@ -205,4 +310,18 @@ catch (Exception ex)
 finally
 {
     Log.CloseAndFlush();
+}
+
+public class SwaggerCookieIdempotency : IOperationFilter
+{
+    public void Apply(OpenApiOperation operation, OperationFilterContext context)
+    {
+        operation.Parameters ??= new List<OpenApiParameter>();
+        operation.Parameters.Add(new OpenApiParameter
+        {
+            Name = "jwt_token",
+            In = ParameterLocation.Cookie,
+            Required = false
+        });
+    }
 }

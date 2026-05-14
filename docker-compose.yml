@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  # הגדרת שירות Redis
+  redis:
+    image: redis:latest
+    container_name: redis_cache
+    ports:
+      - "6379:6379" # פורט התקשורת של רדיס
+    command: redis-server --requirepass MyPassword123 # הגדרת סיסמה

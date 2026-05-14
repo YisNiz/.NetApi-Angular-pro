@@ -3,22 +3,67 @@ using ChineseSaleApi.Dto;
 using ChineseSaleApi.Models;
 using ChineseSaleApi.Repositories;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
+using StackExchange.Redis;
+
+
 
 namespace ChineseSaleApi.Services
 {
     public class GiftService : IGiftService
     {
         private readonly IGiftRepository _repo;
-        public GiftService(IGiftRepository repo)
+        private readonly IDatabase _redis; // הוספה
+
+        public GiftService(IGiftRepository repo, IConnectionMultiplexer redis)
         {
             _repo = repo;
+            // עכשיו הקומפיילר ידע מה זה "redis"
+            _redis = redis.GetDatabase();
         }
+
+        ////get all gifts
+        //public async Task<List<GiftDto>> GetAllGiftsAsync()
+        //{
+        //    var gifts = await _repo.GetAllGiftsAsync();
+        //    return gifts.Select(d => new GiftDto
+        //    {
+        //        Name = d.Name,
+        //        TicketCost = d.TicketCost,
+        //        Description = d.Description,
+        //        PictureUrl = d.PictureUrl,
+        //        Id = d.Id,
+        //        Category = new CategoryDto
+        //        {
+        //            Id = d.Category.Id,
+        //            Name = d.Category?.Name ?? string.Empty
+        //        },
+        //        Donor = new DonorDto
+        //        {
+        //            Id = d.Donor.Id,
+        //            Name = d.Donor.Name,
+        //            Email = d.Donor.Email
+        //        }
+
+        //    }).ToList();
+        //}
 
         //get all gifts
         public async Task<List<GiftDto>> GetAllGiftsAsync()
         {
+            string cacheKey = "all_gifts_cache";
+
+            // 1. ננסה להביא מה-Redis
+            var cachedGifts = await _redis.StringGetAsync(cacheKey);
+            if (!cachedGifts.IsNull)
+            {
+                // אם נמצא ב-cache, נהפוך חלוזרה מרשימת טקסט לרשימת אובייקטים
+                return JsonSerializer.Deserialize<List<GiftDto>>(cachedGifts!)!;
+            }
+
+            // 2. אם לא נמצא, נלך למסד הנתונים (הקוד המקורי שלך)
             var gifts = await _repo.GetAllGiftsAsync();
-            return gifts.Select(d => new GiftDto
+            var giftsDto = gifts.Select(d => new GiftDto
             {
                 Name = d.Name,
                 TicketCost = d.TicketCost,
@@ -36,12 +81,17 @@ namespace ChineseSaleApi.Services
                     Name = d.Donor.Name,
                     Email = d.Donor.Email
                 }
-
             }).ToList();
+
+            // 3. נשמור ב-Redis ל-10 דקות כדי שבפעם הבאה יהיה מהיר
+            await _redis.StringSetAsync(cacheKey, JsonSerializer.Serialize(giftsDto), TimeSpan.FromMinutes(10));
+
+
+            return giftsDto;
         }
 
-        //add gift
-        public async Task AddGiftAsync(AddGiftDto giftDto)
+    //add gift
+    public async Task AddGiftAsync(AddGiftDto giftDto)
         {
             if (!await _repo.DonorExistsAsync(giftDto.DonorId))
                 throw new KeyNotFoundException("Donor not found");
@@ -59,6 +109,8 @@ namespace ChineseSaleApi.Services
             };
 
             await _repo.AddGiftAsync(gift);
+            await _redis.KeyDeleteAsync("all_gifts_cache");
+
         }
 
         //update gift
@@ -81,6 +133,8 @@ namespace ChineseSaleApi.Services
             gift.DonorId = giftDto.DonorId;
 
             await _repo.SaveChangesAsync();
+            await _redis.KeyDeleteAsync("all_gifts_cache");
+
         }
 
         //delete gift
@@ -92,6 +146,8 @@ namespace ChineseSaleApi.Services
                 throw new KeyNotFoundException($"Gift with ID {id} not found.");
 
             await _repo.DeleteGiftAsync(exists);
+            await _redis.KeyDeleteAsync("all_gifts_cache");
+
 
         }
 
