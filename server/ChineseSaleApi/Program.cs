@@ -114,6 +114,7 @@ try
     builder.Services.AddScoped<IUserRepository, UserRepository>();
     builder.Services.AddScoped<IUserService, UserService>();
     builder.Services.AddScoped<ITokenService, TokenService>();
+    builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
     builder.Services.AddSingleton<IConnectionMultiplexer>(sp => 
     ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("Redis")));
 

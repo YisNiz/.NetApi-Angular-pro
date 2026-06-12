@@ -3,15 +3,19 @@ using ChineseSaleApi.Models;
 using ChineseSaleApi.Repositories;
 using System.Collections.Generic;
 using System.Net.WebSockets;
+using Serilog;
 
 namespace ChineseSaleApi.Services
 {
     public class PurchaseService : IPurchaseService
     {
         private readonly IPurchaseRepository _repo;
-        public PurchaseService(IPurchaseRepository repo)
+        private readonly IKafkaProducerService _kafkaProducer;
+
+        public PurchaseService(IPurchaseRepository repo, IKafkaProducerService kafkaProducer)
         {
             _repo = repo;
+            _kafkaProducer = kafkaProducer;
         }
 
         // get all purchases
@@ -67,6 +71,33 @@ namespace ChineseSaleApi.Services
             var winner = tickets[index];
 
             await _repo.UpdateGiftAsync(winner.GiftId, winner.UserId);
+
+            // Send transaction event to Kafka
+            try
+            {
+                var transactionEvent = new TransactionEventDto
+                {
+                    EventType = "Lottery",
+                    GiftId = winner.GiftId,
+                    GiftName = winner.Gift?.Name ?? "Unknown Gift",
+                    WinnerId = winner.UserId,
+                    WinnerName = winner.User.Name,
+                    WinnerUserName = winner.User.UserName,
+                    WinnerPhone = winner.User.Phone,
+                    EventDateTime = DateTime.UtcNow,
+                    GiftPrice = winner.Gift?.Price,
+                    Status = "LotteryCompleted",
+                    Notes = $"Lottery winner selected from {tickets.Count} participants"
+                };
+
+                await _kafkaProducer.SendTransactionEventAsync(transactionEvent);
+                Log.Information($"Lottery event sent to Kafka for gift {giftId}");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Failed to send lottery event to Kafka: {ex.Message}");
+                // Don't throw - the lottery was completed successfully, only logging is failing
+            }
 
             return $"Lottery made successfully! the winner is {winner.User.Name}";
         }
