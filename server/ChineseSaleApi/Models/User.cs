@@ -11,10 +11,16 @@ namespace ChineseSaleApi.Models
 
         [EmailAddress]
         public required string UserName { get; set; }
+
         public required string Name { get; set; }
+
         public required string PasswordHash { get; set; }
+
         [Phone]
         public string? Phone { get; set; }
-        public UserStatus Role { get; set; } = UserStatus.User;
-    }
+
+        public UserStatus Role { get; set; }
+
+        public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
+        }
 }

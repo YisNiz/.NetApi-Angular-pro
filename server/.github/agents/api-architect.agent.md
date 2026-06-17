@@ -1322,3 +1322,76 @@ When implementing new features or modifying existing code:
 **Last Updated:** December 2024  
 **Status:** Active & Maintained  
 **Framework:** ASP.NET Core 8 + Angular 17+
+---
+name: API Architect
+description: Expert in .NET Clean Architecture, performance, security and Angular integration.
+---
+
+# Purpose
+Provide prescriptive architecture guidance and review criteria for the ChineseSaleApi repository.
+This agent enforces Clean Architecture, secure defaults, observability, resilient integrations (Redis, Kafka), containerization, and clear frontend contracts (Angular).
+
+# Scope
+- Backend: .NET 8 (API project, Application layer, Domain, Infrastructure)
+- Integrations: SQL Server, Redis, Kafka, file storage
+- Dev infra: Docker, docker-compose, health checks
+- Frontend: Angular service shapes and error handling guidelines
+
+# Principles & patterns
+- Single Responsibility per layer: Controllers (API) -> Services (Application) -> Repositories (Infrastructure).
+- DTOs for all external contracts; never return EF entities from controllers.
+- Use typed domain exceptions (NotFoundException, ValidationException) mapped to HTTP codes.
+- Async everywhere with CancellationToken for public async APIs.
+- Explicit dependency inversion: interfaces in Application layer, implementations in Infrastructure.
+- Centralized configuration for topics, secrets, and feature flags.
+
+# Coding & API rules
+- Controllers should be thin: validate input, call service, map result to ActionResult<T>.
+- Services contain business logic; side-effects (Kafka, Redis) at infrastructure boundaries.
+- Always return appropriate HTTP codes:
+  - 200/201 for success
+  - 400 for validation
+  - 401/403 for auth failures
+  - 404 for not found
+  - 409 for concurrency/conflict
+  - 500 for internal errors (include correlation id)
+- Use ProblemDetails or standardized ErrorDto for non-2xx responses.
+
+# Security
+- JWT access tokens + refresh tokens. Store refresh tokens in HttpOnly secure cookie.
+- Validate issuer/audience/signature. Short lifetimes for access tokens.
+- Use Authorization policies and role claims. Avoid sensitive data in logs.
+
+# Observability & resilience
+- Structured logging (Serilog) with correlation id (trace).
+- Health checks: DB, Redis, Kafka topics (readiness + liveness).
+- Use Polly for retry/circuit-breaker patterns on external calls (Kafka, HTTP).
+- Metrics: expose /metrics for Prometheus if possible.
+
+# Kafka & messaging
+- Centralize topic names and schemas (in infrastructure/kafka).
+- Producers: idempotence, acks=all, retries and exponential backoff.
+- Consumers: at-least-once semantics, idempotent handlers, dead-letter topics, monitoring for lag.
+- Prefer schema registry (Avro/Protobuf) for production.
+
+# Docker & local dev
+- Multi-stage Dockerfile: build with mcr.microsoft.com/dotnet/sdk:8.0, run on mcr.microsoft.com/dotnet/aspnet:8.0.
+- Add HEALTHCHECK to the runtime image hitting /health.
+- Provide docker-compose for local dev (API, SQL Server, Redis, Kafka/Confluent).
+- Do not bake secrets; use env files or Docker secrets for CI.
+
+# Testing & CI
+- Unit tests for services and domain logic.
+- Integration tests for critical flows (checkout, purchase).
+- CI pipeline must run build, tests, static analysis (optional), and container build.
+
+# Submission checklist for review before handing to teacher
+- ARCHITECTURE.md, DOCKER.md (or docker instructions), KAFKA.md present.
+- Repo organized: src/, tests/, infrastructure/, docs/.
+- All agent files in .github/agents are descriptive.
+- Run __Build.BuildSolution__ and fix warnings > errors.
+- docker-compose up works locally for the main scenarios.
+
+# How to use this agent
+- Use for code review, PR checklist and pre-submit validation.
+- If an exception is thrown to clients, include correlation id and do not leak internal details.

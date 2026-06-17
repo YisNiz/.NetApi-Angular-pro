@@ -4,25 +4,28 @@ using System.Text.Json;
 
 namespace ChineseSaleApi.Services
 {
-    public class KafkaProducerService : IKafkaProducerService
+    public class KafkaProducerService : IKafkaProducerService, IDisposable
     {
         private readonly IProducer<string, string> _producer;
         private readonly string _topic;
+        private readonly string _bootstrapServers;
 
         public KafkaProducerService(IConfiguration configuration)
         {
             var kafkaSettings = configuration.GetSection("Kafka");
-            var bootstrapServers = kafkaSettings["BootstrapServers"];
+            _bootstrapServers = kafkaSettings["BootstrapServers"] ?? "localhost:9092";
             _topic = kafkaSettings["Topic"] ?? "transaction-events";
 
             var producerConfig = new ProducerConfig
             {
-                BootstrapServers = bootstrapServers,
+                BootstrapServers = _bootstrapServers,
                 ClientId = "ChineseSaleApi-Producer",
                 Acks = Acks.All,
-                Retries = 3,
                 MessageTimeoutMs = 30000,
                 RequestTimeoutMs = 30000
+                // 'Retries' was removed from the strongly-typed ProducerConfig API.
+                // If you need to set retry behavior, set the underlying config key:
+                // producerConfig["message.send.max.retries"] = "3";
             };
 
             try
@@ -60,7 +63,7 @@ namespace ChineseSaleApi.Services
                     Value = eventJson
                 };
 
-                var deliveryReport = await _producer.ProduceAsync(_topic, message);
+                var deliveryReport = await _producer.ProduceAsync(_topic, message).ConfigureAwait(false);
 
                 Log.Information($"Message sent to Kafka: Topic={deliveryReport.Topic}, " +
                     $"Partition={deliveryReport.Partition}, Offset={deliveryReport.Offset}");
@@ -72,21 +75,28 @@ namespace ChineseSaleApi.Services
             }
         }
 
-        public async Task<bool> IsConnectedAsync()
+        public Task<bool> IsConnectedAsync()
         {
             try
             {
-                var metadata = _producer.GetMetadata(TimeSpan.FromSeconds(5));
-                return metadata.Brokers.Count > 0;
+                using var admin = new AdminClientBuilder(new AdminClientConfig { BootstrapServers = _bootstrapServers }).Build();
+                var metadata = admin.GetMetadata(TimeSpan.FromSeconds(5));
+                return Task.FromResult(metadata?.Brokers?.Count > 0);
             }
             catch
             {
-                return false;
+                return Task.FromResult(false);
             }
         }
 
         public void Dispose()
         {
+            try
+            {
+                _producer?.Flush(TimeSpan.FromSeconds(5));
+            }
+            catch { /* swallow */ }
+
             _producer?.Dispose();
         }
     }

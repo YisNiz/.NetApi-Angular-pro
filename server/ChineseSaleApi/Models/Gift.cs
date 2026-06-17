@@ -14,11 +14,16 @@ namespace ChineseSaleApi.Models
         public Donor? Donor { get; set; }
         public required int CategoryId { get; set; }
         public Category? Category { get; set; }
-        [ForeignKey("WinnerUser")]
         public int? WinnerUserId { get; set; }
         public User? WinnerUser { get; set; }
-        public ICollection<Ticket> Tickets { get; set; }=new List<Ticket>();
+        public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
 
-
+        // Compatibility: map old usages of Gift.Price to TicketCost
+        [NotMapped]
+        public int Price
+        {
+            get => TicketCost;
+            set => TicketCost = value;
+        }
     }
 }
